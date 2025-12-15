@@ -1,0 +1,8 @@
+{
+  "name": "Calmify AI",
+  "description": "Your personal mental wellness companion utilizing multimodal AI to detect stress and provide support.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
