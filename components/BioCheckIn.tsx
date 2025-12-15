@@ -1,19 +1,22 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, Mic, Square, Save, RefreshCw, Loader2, Video, VideoOff, Sparkles } from 'lucide-react';
+import { Camera, Mic, Square, Save, RefreshCw, Loader2, Video, VideoOff, Sparkles, AlertTriangle, PhoneCall, X } from 'lucide-react';
 import { geminiService } from '../services/geminiService';
-import { CheckInRecord, Habit, Language } from '../types';
+import { CheckInRecord, Habit, Language, EmergencyContact } from '../types';
 
 interface BioCheckInProps {
   onComplete: (record: CheckInRecord) => void;
   language: Language;
   dailyHabits: Habit[];
+  emergencyContact?: EmergencyContact;
 }
 
-export const BioCheckIn: React.FC<BioCheckInProps> = ({ onComplete, language, dailyHabits }) => {
+export const BioCheckIn: React.FC<BioCheckInProps> = ({ onComplete, language, dailyHabits, emergencyContact }) => {
   // Mode: 'setup' | 'recording' | 'review' | 'analyzing'
   const [status, setStatus] = useState<'setup' | 'recording' | 'review' | 'analyzing'>('setup');
   const [textInput, setTextInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<CheckInRecord | null>(null);
   
   // Media Refs
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -158,11 +161,26 @@ export const BioCheckIn: React.FC<BioCheckInProps> = ({ onComplete, language, da
         prediction: analysis.prediction
       };
 
-      onComplete(newRecord);
+      setAnalysisResult(newRecord);
+
+      // Check for High Stress Alert
+      if (analysis.stressLevel >= 8 && emergencyContact) {
+        setShowAlert(true);
+      } else {
+        onComplete(newRecord);
+      }
+
     } catch (error) {
       console.error(error);
       alert("Analysis failed. Please try again.");
       setStatus('review');
+    }
+  };
+
+  const handleDismissAlert = () => {
+    setShowAlert(false);
+    if (analysisResult) {
+      onComplete(analysisResult);
     }
   };
 
@@ -171,10 +189,53 @@ export const BioCheckIn: React.FC<BioCheckInProps> = ({ onComplete, language, da
     setAudioBlob(null);
     setStatus('setup');
     setTextInput('');
+    setShowAlert(false);
+    setAnalysisResult(null);
   };
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-100">
+    <div className="relative max-w-4xl mx-auto bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-slate-100">
+      
+      {/* High Stress Alert Modal */}
+      {showAlert && emergencyContact && (
+        <div className="absolute inset-0 z-50 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-6 animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full text-center shadow-2xl border-4 border-rose-500">
+            <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle size={40} className="text-rose-600" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-slate-900 mb-2">High Stress Detected</h2>
+            <p className="text-rose-600 font-bold text-xl mb-4">Level {analysisResult?.stressLevel}/10</p>
+            
+            <div className="bg-slate-50 p-4 rounded-xl mb-6 text-left border border-slate-200">
+              <p className="text-slate-500 text-sm mb-2 uppercase font-bold tracking-wider">Alerting Emergency Contact</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-bold text-slate-800">{emergencyContact.name}</p>
+                  <p className="text-sm text-slate-500">{emergencyContact.relation}</p>
+                </div>
+                <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white animate-pulse">
+                  <PhoneCall size={20} />
+                </div>
+              </div>
+            </div>
+
+            <div className="text-left bg-blue-50 p-4 rounded-xl mb-6">
+              <h4 className="font-bold text-blue-800 mb-1">Tips for Care:</h4>
+              <p className="text-sm text-blue-700 leading-relaxed">
+                Stay calm. Listen without judgment. Encourage deep breathing.
+              </p>
+            </div>
+
+            <button 
+              onClick={handleDismissAlert}
+              className="w-full py-4 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-all"
+            >
+              I am safe, Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2">
         
         {/* Left Side: Video/Visual */}

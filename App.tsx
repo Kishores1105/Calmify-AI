@@ -8,13 +8,15 @@ import {
   ShieldCheck,
   Sparkles,
   UserRound,
-  Globe
+  Globe,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { BioCheckIn } from './components/BioCheckIn';
 import { ChatBot } from './components/ChatBot';
 import { Assessment } from './components/Assessment';
 import { Consultation } from './components/Consultation';
+import { Settings } from './components/Settings';
 import { AppView, CheckInRecord, UserState, AssessmentRecord, Language, Habit } from './types';
 
 // Mock Initial Habits
@@ -28,6 +30,7 @@ const DEFAULT_HABITS: Habit[] = [
 const INITIAL_STATE: UserState = {
   name: "Alex",
   language: 'en',
+  location: '',
   history: [
     {
       id: "1",
@@ -111,6 +114,10 @@ function App() {
     setUserState(prev => ({ ...prev, language: lang }));
   };
 
+  const updateUserProfile = (updates: Partial<UserState>) => {
+    setUserState(prev => ({ ...prev, ...updates }));
+  };
+
   const NavItem = ({ view, icon: Icon, label }: { view: AppView, icon: any, label: string }) => (
     <button
       onClick={() => {
@@ -158,6 +165,7 @@ function App() {
           <NavItem view={AppView.CHAT} icon={MessageCircleHeart} label="AI Therapist" />
           <NavItem view={AppView.CONSULTATION} icon={UserRound} label="Stress Doctors" />
           <NavItem view={AppView.ASSESSMENT} icon={ClipboardList} label="Assessments" />
+          <NavItem view={AppView.SETTINGS} icon={SettingsIcon} label="Settings" />
           
           <div className="mt-8 mb-4 px-4">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center">
@@ -223,6 +231,7 @@ function App() {
                 onComplete={handleCheckInComplete} 
                 language={userState.language}
                 dailyHabits={userState.habits[new Date().toDateString()] || []}
+                emergencyContact={userState.emergencyContact}
               />
             )}
             {currentView === AppView.CHAT && (
@@ -233,6 +242,9 @@ function App() {
             )}
             {currentView === AppView.ASSESSMENT && (
               <Assessment onComplete={handleAssessmentComplete} />
+            )}
+            {currentView === AppView.SETTINGS && (
+              <Settings userState={userState} onUpdateUser={updateUserProfile} />
             )}
           </div>
         </div>

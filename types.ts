@@ -6,6 +6,12 @@ export interface Habit {
   completed: boolean;
 }
 
+export interface EmergencyContact {
+  name: string;
+  phone: string;
+  relation: string;
+}
+
 export interface Doctor {
   id: string;
   name: string;
@@ -13,11 +19,14 @@ export interface Doctor {
   rating: number;
   image: string;
   available: boolean;
+  location: string;
 }
 
 export interface UserState {
   name: string;
   language: Language;
+  location?: string;
+  emergencyContact?: EmergencyContact;
   history: CheckInRecord[];
   assessments: AssessmentRecord[];
   habits: Record<string, Habit[]>; // Date string -> Habits
@@ -56,7 +65,7 @@ export enum AppView {
   CHAT = 'CHAT',
   ASSESSMENT = 'ASSESSMENT',
   CONSULTATION = 'CONSULTATION',
-  RESOURCES = 'RESOURCES',
+  SETTINGS = 'SETTINGS',
 }
 
 export interface AnalysisResponse {
